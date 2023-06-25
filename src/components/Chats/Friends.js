@@ -37,6 +37,10 @@ const handleOpenModal = () => {
         setTabValue(newValue);
     };
 
+    const [friendChats, setFriendChats] = useState([]);
+
+// ...
+
     const accessChat = async (userId) => {
         try {
             setLoadingChat(true);
@@ -55,8 +59,8 @@ const handleOpenModal = () => {
                 return;
             }
 
-            // Cerca la chat con l'utente selezionato nella lista delle chat
-            const existingChat = chats.find((chat) =>
+            // Cerca la chat con l'utente selezionato nella lista delle chat tra gli amici
+            const existingChat = friendChats.find((chat) =>
                 chat.users.some((chatUser) => chatUser._id === userId)
             );
 
@@ -69,6 +73,9 @@ const handleOpenModal = () => {
                     config
                 );
 
+                // Aggiorna la lista delle chat degli amici includendo la nuova chat
+                setFriendChats((prevFriendChats) => [...prevFriendChats, data]);
+
                 setSelectedChat(data); // Aggiorna la chat selezionata
             }
 
@@ -80,6 +87,7 @@ const handleOpenModal = () => {
             setErrorSnackBar(true);
         }
     };
+
 
 
 
@@ -105,17 +113,32 @@ const handleOpenModal = () => {
                 prevFriendsList.filter((u) => u._id !== friend._id)
             );
 
+            // Rimuovi l'amico dalla lista delle chat degli amici solo se è presente
+            const updatedFriendChats = friendChats.filter(
+                (chat) =>
+                    chat.users.every((chatUser) => chatUser._id !== friend._id)
+            );
+            setFriendChats(updatedFriendChats);
+
             // Rimuovi l'amico dalla lista delle chat solo se è presente
             const updatedChats = chats.filter(
-                (chat) => chat.users.every((chatUser) => chatUser._id !== friend._id)
+                (chat) =>
+                    chat.users.every((chatUser) => chatUser._id !== friend._id)
             );
             setChats(updatedChats);
+
+            // Rimuovi la chat selezionata se corrisponde all'amico rimosso
+            if (selectedChat && selectedChat.users.some((chatUser) => chatUser._id === friend._id)) {
+                setSelectedChat(null);
+            }
 
             // Aggiorna il valore nel localStorage dopo la rimozione dell'amico
             const storedFriendsList = sessionStorage.getItem("friendsList");
             if (storedFriendsList) {
                 const parsedFriendsList = JSON.parse(storedFriendsList);
-                const updatedFriendsList = parsedFriendsList.filter((u) => u._id !== friend._id);
+                const updatedFriendsList = parsedFriendsList.filter(
+                    (u) => u._id !== friend._id
+                );
                 sessionStorage.setItem("friendsList", JSON.stringify(updatedFriendsList));
             }
 
@@ -126,6 +149,9 @@ const handleOpenModal = () => {
             setLoading(false);
         }
     };
+
+
+
 
     const handleSearch = async (query) => {
         setSearch(query);
@@ -217,7 +243,7 @@ const handleOpenModal = () => {
                     !chat.isFriend
             );
             setChats(updatedChats);
-           saveChatsToLocalStorage(updatedChats);// Salva le informazioni sulla chat nel localStorage
+
 
             setLoading(false);
         } catch (error) {
