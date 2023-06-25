@@ -16,30 +16,34 @@ const [loggedUser, setLoggedUser]=useState()
 
 
 
-// ...
-
-
-// ...
+    const [isInitialized, setIsInitialized] = useState(false);
 
     const fetchChats = async () => {
         try {
             const config = {
-                    headers: {
-                        Authorization: `Bearer ${user.token}`,
-                    },
-                };
+                headers: {
+                    Authorization: `Bearer ${user.token}`,
+                },
+            };
 
-                const { data } = await axios.get("http://localhost:8080/api/chat", config);
-                setChats(data);
+            const { data } = await axios.get("http://localhost:8080/api/chat", config);
+            if (!isInitialized) {
+                setChats(data); // Inizializza lo stato delle chat solo se non è già stato inizializzato
+                setIsInitialized(true);
+            }
         } catch (error) {
             console.log(error);
         }
-    }
-
+    };
     useEffect(() => {
         setLoggedUser(getUserFromLocalStorage("user"));
-        fetchChats();
-    }, [fetchAgain]);
+        fetchChats(); // Chiamata durante il caricamento iniziale
+
+        // Restituisci una funzione di cleanup per reimpostare lo stato di isInitialized quando il componente viene smontato
+        return () => {
+            setIsInitialized(false);
+        };
+    }, []);
 
 
 
