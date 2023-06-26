@@ -112,7 +112,10 @@ const [socketConnected, setSocketConnected]=useState(false)
     useEffect(() => {
         socket = io(ENDPOINT);
         socket.emit("setup", user);
-        socket.on("connected", () => setSocketConnected(true));
+        socket.on("connected", () =>{
+            setSocketConnected(true)
+            fetchMessages()
+        });
         socket.on("typing", () => setIsTyping(true));
         socket.on("stop typing", () => setIsTyping(false));
 
@@ -140,7 +143,7 @@ const [socketConnected, setSocketConnected]=useState(false)
                 setMessages([...messages, newMessageRecieved]);
             }
         });
-    });
+    },);
 
     const typingHandler = (e) => {
         setNewMessage(e.target.value);

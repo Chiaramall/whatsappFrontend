@@ -8,7 +8,7 @@ import {
     Button,
     IconButton,
     InputAdornment,
-    Snackbar
+    Snackbar, Alert, FormLabel, FormControl, Input
 } from "@mui/material";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -26,19 +26,18 @@ function SignUp() {
 
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarColor, setSnackbarColor] = useState("success");
+    const [snackbarSeverity, setSnackbarSeverity] = useState("");
     const { setUser } = useChatState();
 
-    const handleProfileImageChange = (event) => {
-        const imageFile = event.target.files[0];
-        setPic(imageFile);
-    };
 
     const handleTogglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
     const handleToggleConfirmPasswordVisibilty = () => {
         setShowconfirmPassword(!showconfirmPassword);
+    };
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
     };
 
 
@@ -47,6 +46,7 @@ function SignUp() {
         email: "",
         password: "",
         passwordConfirm: "",
+        pic:""
     });
 
     const handleSubmit = async (e) => {
@@ -54,9 +54,17 @@ function SignUp() {
 
         const { name, email, password, passwordConfirm } = values;
 
-        if (!name || !email || !password) {
-            setSnackbarColor("error");
+        if (!name || !email || !password || !passwordConfirm) {
+            setSnackbarSeverity("error");
             setSnackbarMessage("Please fill in all the fields.");
+            setSnackbarOpen(true);
+            setValues({ ...values, loading: false });
+            return;
+        }
+
+        if (password !== passwordConfirm) {
+            setSnackbarSeverity("error");
+            setSnackbarMessage("Passwords do not match.");
             setSnackbarOpen(true);
             setValues({ ...values, loading: false });
             return;
@@ -71,16 +79,15 @@ function SignUp() {
                 pic,
             });
 
-
             addUserToLocalStorage(data);
             navigate("/chats");
-            setSnackbarColor(snackbarColor);
-            setSnackbarMessage("Registrazione effettuata con successo.");
+            setSnackbarSeverity("success");
+            setSnackbarMessage("Registration completed successfully.");
             setSnackbarOpen(true);
             setValues({ ...values, loading: false });
         } catch (error) {
-            setSnackbarColor("error");
-            setSnackbarMessage("Errore nel login, password o email errate.");
+            setSnackbarSeverity("error");
+            setSnackbarMessage("Error in registration, incorrect password or email.");
             setSnackbarOpen(true);
             setValues({ ...values, loading: false });
         }
@@ -129,7 +136,7 @@ return (
                         />
                         <TextField
                             label="Confirm Password"
-                            type={showPassword ? "text" : "password"}
+                            type={showconfirmPassword ? "text" : "password"}
                             onChange={(e) => setValues({ ...values, passwordConfirm: e.target.value })}
                             fullWidth
                             required
@@ -137,18 +144,34 @@ return (
                                 endAdornment: (
                                     <InputAdornment position="end">
                                         <IconButton onClick={handleToggleConfirmPasswordVisibilty} edge="end">
-                                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                            {showconfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                                         </IconButton>
                                     </InputAdornment>
                                 ),
                             }}
                         />
-                        <input type="file" accept="image/*" onChange={handleProfileImageChange} />
+
+                        <FormControl>
+                            <FormLabel>Upload Pic</FormLabel>
+                            <Input
+                                type="file"
+                                multiple={false}
+                                onChange={(event) => {
+                                    const imageFile = event.target.files[0];
+                                    setValues({ ...values, pic: imageFile });
+                                }}
+                            />
+                        </FormControl>
                         <Button type="submit" variant="contained" color="primary" fullWidth>
                             Register
                         </Button>
                     </Stack>
                 </form>
+                <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                    <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                        {snackbarMessage}
+                    </Alert>
+                </Snackbar>
             </Box>
         </Container>
     </div>

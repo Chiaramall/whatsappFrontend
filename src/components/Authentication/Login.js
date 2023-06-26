@@ -9,7 +9,7 @@ import {
     Button,
     IconButton,
     InputAdornment,
-    Snackbar,
+    Snackbar, Alert,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -29,7 +29,7 @@ function Login() {
     });
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarColor, setSnackbarColor] = useState("success");
+    const [snackbarSeverity, setSnackbarSeverity] = useState("");
 
     const handleTogglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -40,7 +40,7 @@ function Login() {
         setValues({ ...values, loading: true });
         const { email, password } = values;
         if (!email || !password) {
-            setSnackbarColor("error");
+            setSnackbarSeverity("error");
             setSnackbarMessage("Please fill in all the fields.");
             setSnackbarOpen(true);
             setValues({ ...values, loading: false });
@@ -51,15 +51,16 @@ function Login() {
                 email,
                 password,
             });
+            setSnackbarSeverity("success");
+            setSnackbarMessage("Login effettuato con successo");
+            setSnackbarOpen(true);
 
             addUserToLocalStorage(data);
             navigate("/chats");
-            setSnackbarColor(snackbarColor);
-            setSnackbarMessage("Login effettuato con successo.");
-            setSnackbarOpen(true);
+
             setValues({ ...values, loading: false });
         } catch (error) {
-            setSnackbarColor("error");
+            setSnackbarSeverity("error");
             setSnackbarMessage("Errore nel login, password o email errate.");
             setSnackbarOpen(true);
             setValues({ ...values, loading: false });
@@ -122,13 +123,11 @@ function Login() {
                         </Button>
                     </Stack>
                 </form>
-                <Snackbar
-                    open={snackbarOpen}
-                    autoHideDuration={3000}
-                    onClose={handleSnackbarClose}
-                    message={snackbarMessage}
-                    color={snackbarColor}
-                />
+                <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                    <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                        {snackbarMessage}
+                    </Alert>
+                </Snackbar>
             </Box>
         </Container>
     );

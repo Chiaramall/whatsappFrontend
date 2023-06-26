@@ -1,7 +1,20 @@
 import React, { useEffect, useState } from "react";
 import {
+    Alert,
     Box,
-    Button, CircularProgress, Dialog, DialogContent, DialogTitle, FormControl, Grid, Input, Snackbar, Stack, Tab, Tabs, Typography,
+    Button,
+    CircularProgress,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    Grid,
+    Input,
+    Snackbar,
+    Stack,
+    Tab,
+    Tabs,
+    Typography,
 } from "@mui/material";
 import axios from "axios";
 import FriendsListItem from "../User/FriendListItem";
@@ -16,18 +29,23 @@ function Friends({ children }) {
     const [tabValue, setTabValue] = useState(0);
     const [search, setSearch] = useState("");
     const [searchResult, setSearchResult] = useState([]);
-    const [openSnackErrorbar, setErrorSnackBar] = useState(false);
-    const [openUserSnackBsr, setUserSnackBar] = useState(false);
     const [loading, setLoading] = useState(false);
     const [loadingChat, setLoadingChat] = useState(false);
+const [severitySnackbar, setSeveritySnackbar]=useState("")
+    const [snackbarMessage, setSnackbarMessage]=useState("")
+
+    const [snackbarOpen, setSnackbarOpen]=useState(false)
 
     const { user, chats, setChats, friendsList,setFriendsList,selectedChat, setSelectedChat} = useChatState();
 
 
 
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
+    };
 
 
-const handleOpenModal = () => {
+    const handleOpenModal = () => {
         setOpenModal(true);
     };
     const handleCloseModal = () => {
@@ -76,15 +94,18 @@ const handleOpenModal = () => {
                 // Aggiorna la lista delle chat degli amici includendo la nuova chat
                 setFriendChats((prevFriendChats) => [...prevFriendChats, data]);
 
-                setSelectedChat(data); // Aggiorna la chat selezionata
+                setSelectedChat(data);
+                // Aggiorna la chat selezionata
             }
 
             setLoadingChat(false);
 
             handleCloseModal(); // Chiudi la modale dopo aver selezionato/aperto la chat
         } catch (error) {
-            console.error(error);
-            setErrorSnackBar(true);
+            setSeveritySnackbar("error");
+            setSnackbarMessage("errore")
+            setSnackbarOpen(true)
+            setLoading(false);
         }
     };
 
@@ -133,13 +154,13 @@ const handleOpenModal = () => {
             }
 
             // Aggiorna il valore nel localStorage dopo la rimozione dell'amico
-            const storedFriendsList = sessionStorage.getItem("friendsList");
+            const storedFriendsList = localStorage.getItem("friendsList");
             if (storedFriendsList) {
                 const parsedFriendsList = JSON.parse(storedFriendsList);
                 const updatedFriendsList = parsedFriendsList.filter(
                     (u) => u._id !== friend._id
                 );
-                sessionStorage.setItem("friendsList", JSON.stringify(updatedFriendsList));
+                localStorage.setItem("friendsList", JSON.stringify(updatedFriendsList));
             }
 
             setLoading(false);
@@ -173,7 +194,9 @@ const handleOpenModal = () => {
             setLoading(false);
             setSearchResult(data);
         } catch (error) {
-            setErrorSnackBar(true);
+            setSeveritySnackbar("error")
+            setSnackbarMessage("errore nella ricerca")
+            setSnackbarOpen(true)
         }
     };
     const getFriendsList = async () => {
@@ -191,7 +214,7 @@ const handleOpenModal = () => {
             setFriendsList(data.friends);
 
             // Salva la lista degli amici nel localStorage
-            sessionStorage.setItem("friendsList", JSON.stringify(data.friends));
+            localStorage.setItem("friendsList", JSON.stringify(data.friends));
 
             setLoading(false);
         } catch (error) {
@@ -202,7 +225,7 @@ const handleOpenModal = () => {
 
     useEffect(() => {
         // Recupera la lista degli amici dal localStorage se presente
-        const storedFriendsList = sessionStorage.getItem("friendsList");
+        const storedFriendsList = localStorage.getItem("friendsList");
         if (storedFriendsList) {
             setFriendsList(JSON.parse(storedFriendsList));
         } else {
@@ -214,7 +237,9 @@ const handleOpenModal = () => {
 
     const handleSubmit = async (friend) => {
         if (friendsList.length > 0 && friendsList.find((u) => u._id === friend._id)) {
-            console.log("Errore: Amico già presente nella lista");
+           setSeveritySnackbar("error");
+            setSnackbarMessage("amico già aggiunto alla lista");
+            setSnackbarOpen(true)
             return;
         }
 
@@ -232,7 +257,9 @@ const handleOpenModal = () => {
                 { _id: user._id, friendId: friend._id },
                 config
             );
-
+            setSeveritySnackbar("success")
+            setSnackbarMessage("amico aggiunto con successo")
+              setSnackbarOpen(true)
             // Aggiorna la lista degli amici
             await getFriendsList(); // Recupera la lista aggiornata dal backend server
 
@@ -247,7 +274,9 @@ const handleOpenModal = () => {
 
             setLoading(false);
         } catch (error) {
-            console.error(error);
+            setSeveritySnackbar("error");
+            setSnackbarMessage("errore")
+            setSnackbarOpen(true)
             setLoading(false);
         }
     };
@@ -272,7 +301,7 @@ const handleOpenModal = () => {
                 </DialogTitle>
                 <DialogContent>
                     <Tabs value={tabValue} onChange={handleTabChange} centered>
-                        <Tab label="Friend List" />
+                        <Tab label="Friends List" />
                         <Tab label="Add Friends" />
                     </Tabs>
                     {tabValue === 0 && (
@@ -344,19 +373,11 @@ const handleOpenModal = () => {
                 </DialogContent>
             </Dialog>
 
-            <Snackbar
-                open={openSnackErrorbar}
-                autoHideDuration={3000}
-                onClose={() => setErrorSnackBar(false)}
-                message="Errore nella ricerca"
-            />
-
-            <Snackbar
-                open={openUserSnackBsr}
-                autoHideDuration={3000}
-                onClose={() => setUserSnackBar(false)}
-                message="Utente già presente"
-            />
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                <Alert onClose={handleSnackbarClose} severity={severitySnackbar} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </>
     );
 }

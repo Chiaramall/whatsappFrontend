@@ -10,7 +10,7 @@ import {
     Avatar,
     MenuList,
     IconButton,
-    SwipeableDrawer, Modal, Input, Snackbar, CircularProgress
+    SwipeableDrawer, Modal, Input, Snackbar, CircularProgress, Alert, Badge
 } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import {Doorbell, DoorbellOutlined, ExpandMore, Notifications} from "@mui/icons-material";
@@ -33,7 +33,10 @@ function SideBar() {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("")
     const [openSnackbar, setOpenSnackbar] = useState(false);
-    const [openSnackErrorbar, setErrorSnackBar] = useState(false);
+   const [snackbarSeverity, setSnackbarseverity]=useState("")
+    const [snackbarMessage, setSnackbarMessage]=useState("")
+    const [notificationCount, setNotificationCount] = useState(0);
+
     const [profileOpen, setProfileOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
 
@@ -72,9 +75,7 @@ function SideBar() {
     const handleSnackbarClose = () => {
         setOpenSnackbar(false);
     };
-    const handleErrorSnackBarClose = () => {
-        setErrorSnackBar(false);
-    };
+
 
     const [notificationMenuAnchorEl, setNotificationMenuAnchorEl] = useState(null);
 
@@ -82,6 +83,12 @@ function SideBar() {
 
     const handleNotificationMenuOpen = (event) => {
         setNotificationMenuAnchorEl(event.currentTarget);
+        setNotificationCount(0); // Reset the notification count when the menu is opened
+    };
+
+    const handleSearchMenuClose = () => {
+        setNotificationMenuAnchorEl(false);
+        setNotificationCount(notificationCount + 1); // Increment the notification count
     };
 
     const handleNotificationMenuClose = () => {
@@ -112,9 +119,6 @@ function SideBar() {
     };
 
 
-    const handleSearchMenuClose = () => {
-        setAnchorElSearch(null);
-    };
 
     const handleAvatarMenuOpen = (event) => {
         setAnchorElAvatar(event.currentTarget);
@@ -129,15 +133,15 @@ function SideBar() {
     const logoutHandler = () => {
         removeUserFromLocalStorage("user");
         removeFriends("friendsList")
-        removeChats("chats")
-        removeMessage('messages')
         navigate("/");
     };
 
 
     const handleSearch = async () => {
         if (!search) {
-            setOpenSnackbar(true);
+           setSnackbarseverity("error")
+            setSnackbarMessage("campo di ricerca vuoto")
+            setOpenSnackbar(true)
             return;
         }
 
@@ -155,7 +159,9 @@ function SideBar() {
             // Aggiungi i nuovi risultati alla lista dei risultati di ricerca esistente
             setSearchResult(data);
         } catch (e) {
-            setOpenSnackbar(true);
+          setSnackbarseverity("error")
+            setSnackbarMessage("errore nella ricerca")
+            setOpenSnackbar(true)
         }
     };
 
@@ -174,7 +180,9 @@ function SideBar() {
             const isFriend = friendsList.some((friend) => friend._id === userId);
 
             if (isFriend) {
-                setErrorSnackBar(true); // Mostra messaggio di errore
+                setSnackbarseverity("error")
+                setSnackbarMessage("utente già presente fra gli amici")
+                setOpenSnackbar(true)
                 setLoadingChat(false);
                 return;
             }
@@ -193,6 +201,9 @@ function SideBar() {
                     { userId },
                     config
                 );
+                setSnackbarseverity("success")
+                setSnackbarMessage("utente aggiunto alla lista delle chat")
+                setOpenSnackbar(true)
 
                 setSelectedChat(data); // Aggiorna la chat selezionata
 
@@ -203,12 +214,24 @@ function SideBar() {
             setLoadingChat(false);
             closeDrawer();
         } catch (error) {
-            console.error(error);
-            setOpenSnackbar(true);
+            setSnackbarseverity("error")
+            setSnackbarMessage("errore")
+            setOpenSnackbar(true)
+            setLoadingChat(false);
         }
     };
 
+    useEffect(() => {
+        // Aggiorna il conteggio delle notifiche quando la prop `notifications` cambia
+        setNotificationCount(notifications.length);
+    }, [notifications]);
 
+    useEffect(() => {
+        // Apri il menu delle notifiche se ci sono nuove notifiche
+        if (notifications.length > 0) {
+            setNotificationMenuAnchorEl(true);
+        }
+    }, [notifications]);
 
 
 
@@ -239,11 +262,11 @@ function SideBar() {
 
             <div>
                 <Button
-                    aria-controls="search-menu"
-                    aria-haspopup="true"
                     onClick={handleNotificationMenuOpen}
                 >
-                    <Notifications/>
+                    <Badge badgeContent={notificationCount} color="secondary">
+                        <Notifications />
+                    </Badge>
                 </Button>
 
                 <Menu
@@ -340,18 +363,11 @@ function SideBar() {
             {loadingChat && <CircularProgress display="flex"/>}
         </div>
 
-        <Snackbar
-            open={openSnackbar}
-            autoHideDuration={3000}
-            onClose={handleSnackbarClose}
-            message="Errore"
-        />
-        <Snackbar
-            open={openSnackErrorbar}
-            autoHideDuration={3000}
-            onClose={handleErrorSnackBarClose}
-            message="Errore nella ricerca o utente già presente fra gli amici"
-        />
+        <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleSnackbarClose}>
+            <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                {snackbarMessage}
+            </Alert>
+        </Snackbar>
     </SwipeableDrawer>
         </div>
 
