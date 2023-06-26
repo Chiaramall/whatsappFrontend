@@ -38,7 +38,7 @@ const [loggedUser, setLoggedUser]=useState()
         if (isLoading) {
             fetchChats(); // Effettua la chiamata solo durante il caricamento iniziale
         }
-    }, []);
+    }, [fetchAgain]);
 
 
 

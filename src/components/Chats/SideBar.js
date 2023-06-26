@@ -165,7 +165,7 @@ function SideBar() {
             setLoadingChat(true);
             const config = {
                 headers: {
-                    "Content-Type":"application/json",
+                    "Content-Type": "application/json",
                     Authorization: `Bearer ${user.token}`,
                 },
             };
@@ -174,49 +174,40 @@ function SideBar() {
             const isFriend = friendsList.some((friend) => friend._id === userId);
 
             if (isFriend) {
-                setError(true);
+                setErrorSnackBar(true); // Mostra messaggio di errore
                 setLoadingChat(false);
                 return;
             }
 
             // Verifica se la chat con l'utente selezionato è già presente nella lista delle chat
             const existingChat = chats.find((chat) =>
-                chat.users.every(
-                    (chatUser) => chatUser._id === userId || chatUser._id === user._id
-                )
+                chat.users.some((chatUser) => chatUser._id === userId)
             );
 
             if (existingChat) {
-                // Rimuovi la chat esistente dalla lista delle chat
-                const updatedChats = chats.filter(
-                    (chat) => chat._id !== existingChat._id
+                setSelectedChat(existingChat); // Seleziona la chat esistente
+            } else {
+                // Chat non trovata, crea una nuova chat
+                const { data } = await axios.post(
+                    "http://localhost:8080/api/chat",
+                    { userId },
+                    config
                 );
+
+                setSelectedChat(data); // Aggiorna la chat selezionata
+
+                const updatedChats = [data, ...chats]; // Aggiungi la nuova chat alla lista delle chat
                 setChats(updatedChats);
-             // Salva le informazioni sulla chat nel localStorage
             }
-
-            const { data } = await axios.post(
-                "http://localhost:8080/api/chat",
-                { userId },
-                config
-            );
-
-            // Aggiungi la nuova chat alla lista delle chat solo se non è già presente
-            if (!chats.find((chat) => chat._id === data._id)) {
-                const updatedChats = [data, ...chats];
-                setChats(updatedChats);
-
-            }
-
-            setSelectedChat(data); // Aggiorna la chat selezionata
 
             setLoadingChat(false);
             closeDrawer();
         } catch (error) {
             console.error(error);
-            setErrorSnackBar(true);
+            setOpenSnackbar(true);
         }
     };
+
 
 
 
@@ -356,9 +347,9 @@ function SideBar() {
             message="Errore"
         />
         <Snackbar
-            open={error}
+            open={openSnackErrorbar}
             autoHideDuration={3000}
-            onClose={handleSnackbarClose}
+            onClose={handleErrorSnackBarClose}
             message="Errore nella ricerca o utente già presente fra gli amici"
         />
     </SwipeableDrawer>
