@@ -84,7 +84,7 @@ function SingleChat() {
                 };
                 setNewMessage("");
                 const { data } = await axios.post(
-                    "http://localhost:8080/api/message",
+                    "https://mern-chat-app-api-cmhy.onrender.com/api/message",
                     {
                         content: newMessage,
                         chatId: selectedChat,
