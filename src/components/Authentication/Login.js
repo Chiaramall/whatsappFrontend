@@ -47,7 +47,7 @@ function Login() {
             return;
         }
         try {
-            const { data } = await axios.post("http://localhost:8080/api/user/login", {
+            const { data } = await axios.post("https://mern-chat-app-api-cmhy.onrender.com/api/user/login", {
                 email,
                 password,
             });

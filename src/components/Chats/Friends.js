@@ -55,10 +55,8 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
         setTabValue(newValue);
     };
 
-    const [friendChats, setFriendChats] = useState([]);
 
 // ...
-
     const accessChat = async (userId) => {
         try {
             setLoadingChat(true);
@@ -86,13 +84,13 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
                 setSelectedChat(existingChat); // Apri la chat esistente
             } else {
                 const { data } = await axios.post(
-                    "http://localhost:8080/api/chat",
+                    "https://mern-chat-app-api-cmhy.onrender.com/api/chat",
                     { userId },
                     config
                 );
 
                 // Aggiorna la lista delle chat degli amici includendo la nuova chat
-                setFriendChats((prevFriendChats) => [...prevFriendChats, data]);
+                setFriendsList((prevFriendChats) => [...prevFriendChats, data]);
 
                 setSelectedChat(data);
                 // Aggiorna la chat selezionata
@@ -124,7 +122,7 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
             };
 
             const { data } = await axios.post(
-                "http://localhost:8080/api/friends/remove",
+                "https://mern-chat-app-api-cmhy.onrender.com/api/friends/remove",
                 { userId: user._id, friendId: friend._id },
                 config
             );
@@ -134,12 +132,6 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
                 prevFriendsList.filter((u) => u._id !== friend._id)
             );
 
-            // Rimuovi l'amico dalla lista delle chat degli amici solo se è presente
-            const updatedFriendChats = friendChats.filter(
-                (chat) =>
-                    chat.users.every((chatUser) => chatUser._id !== friend._id)
-            );
-            setFriendChats(updatedFriendChats);
 
             // Rimuovi l'amico dalla lista delle chat solo se è presente
             const updatedChats = chats.filter(
@@ -153,15 +145,6 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
                 setSelectedChat(null);
             }
 
-            // Aggiorna il valore nel localStorage dopo la rimozione dell'amico
-            const storedFriendsList = localStorage.getItem("friendsList");
-            if (storedFriendsList) {
-                const parsedFriendsList = JSON.parse(storedFriendsList);
-                const updatedFriendsList = parsedFriendsList.filter(
-                    (u) => u._id !== friend._id
-                );
-                localStorage.setItem("friendsList", JSON.stringify(updatedFriendsList));
-            }
 
             setLoading(false);
         } catch (error) {
@@ -187,7 +170,7 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
                 },
             };
             const { data } = await axios.get(
-                `http://localhost:8080/api/user?search=${search}`,
+                `https://mern-chat-app-api-cmhy.onrender.com/api/user?search=${search}`,
                 config
             );
 
@@ -208,13 +191,12 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
                 },
             };
             const { data } = await axios.get(
-                "http://localhost:8080/api/friends",
+                "https://mern-chat-app-api-cmhy.onrender.com/api/friends",
                 config
             );
             setFriendsList(data.friends);
 
-            // Salva la lista degli amici nel localStorage
-            localStorage.setItem("friendsList", JSON.stringify(data.friends));
+
 
             setLoading(false);
         } catch (error) {
@@ -223,21 +205,12 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
         }
     };
 
-    useEffect(() => {
-        // Recupera la lista degli amici dal localStorage se presente
-        const storedFriendsList = localStorage.getItem("friendsList");
-        if (storedFriendsList) {
-            setFriendsList(JSON.parse(storedFriendsList));
-        } else {
-            getFriendsList();
-        }
-    }, []);
 
 
 
     const handleSubmit = async (friend) => {
         if (friendsList.length > 0 && friendsList.find((u) => u._id === friend._id)) {
-           setSeveritySnackbar("error");
+            setSeveritySnackbar("error");
             setSnackbarMessage("amico già aggiunto alla lista");
             setSnackbarOpen(true)
             return;
@@ -253,13 +226,13 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
             };
 
             const { data } = await axios.put(
-                "http://localhost:8080/api/friends/add",
+                "https://mern-chat-app-api-cmhy.onrender.com/api/friends/add",
                 { _id: user._id, friendId: friend._id },
                 config
             );
             setSeveritySnackbar("success")
             setSnackbarMessage("amico aggiunto con successo")
-              setSnackbarOpen(true)
+            setSnackbarOpen(true)
             // Aggiorna la lista degli amici
             await getFriendsList(); // Recupera la lista aggiornata dal backend server
 

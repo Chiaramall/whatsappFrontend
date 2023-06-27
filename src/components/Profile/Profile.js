@@ -40,7 +40,7 @@ function Profile({ user, children }) {
                         {user.name}
                     </Typography>
                     <Grid item>
-                        <Avatar src={user.pic} sx={{ width: 100, height: 100, mb: 2 }} alt={user.name} />
+                        <Avatar src={user.pic} sx={{ width: 100, height: 100, mb: 2 }} alt={user.name} ></Avatar>
                     </Grid>
                     <Typography sx={{ mb: 2, textAlign: 'center', color: 'blue' }}>
                         {user.email}

@@ -7,7 +7,7 @@ import Friends from "./Friends";
 import {getChatsFromLocalStorage, getUserFromLocalStorage, saveChatsToLocalStorage} from "../../utils/localStorage";
 
 function MyChat({ fetchAgain }) {
-    const { selectedChat, setSelectedChat, chats, user, setChats, setUser } = useChatState();
+    const { selectedChat, setSelectedChat, chats, user, setChats, setUser, friendsList } = useChatState();
 const [openSnackBar, setOpenSnackbar]=useState(false);
 const [loggedUser, setLoggedUser]=useState()
     const handleCloseSnackbar = () => {
@@ -26,19 +26,36 @@ const [loggedUser, setLoggedUser]=useState()
                 },
             };
 
-            const { data } = await axios.get("http://localhost:8080/api/chat", config);
-            setChats(data);
-            setIsLoading(false); // Imposta isLoading su false dopo aver ottenuto i dati delle chat
+            const { data } = await axios.get("https://mern-chat-app-api-cmhy.onrender.com/api/chat", config);
+
+            // Rimuovi chat duplicati
+            const uniqueChats = data.filter((chat) => {
+                return !chats.some((existingChat) => existingChat.id === chat.id);
+            });
+
+            // Rimuovi chat che fanno parte della lista degli amici
+            const filteredChats = uniqueChats.filter((chat) => {
+                if (friendsList && friendsList.length > 0) {
+                    return !friendsList.some((friend) =>
+                        friend.chats.some((c) => c.id === chat.id)
+                    );
+                }
+                return true;
+            });
+
+            setChats(filteredChats);
+            setIsLoading(false);
         } catch (error) {
             console.log(error);
         }
-    }
+    };
+
     useEffect(() => {
-        setUser(getUserFromLocalStorage("user"));
+
         if (isLoading) {
             fetchChats(); // Effettua la chiamata solo durante il caricamento iniziale
         }
-    }, [fetchAgain]);
+    }, [isLoading]);
 
 
 

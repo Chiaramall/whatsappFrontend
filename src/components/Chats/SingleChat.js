@@ -33,7 +33,7 @@ function SingleChat() {
     const [loading, setLoading] = useState(false);
     const [newMessage, setNewMessage] = useState("");
 
-const [socketConnected, setSocketConnected]=useState(false)
+    const [socketConnected, setSocketConnected]=useState(false)
     const [typing, setTyping]=useState(false)
     const [isTyping, setIsTyping]=useState(false)
     const [fetchAgain, setFetchAgain]=useState(false)
@@ -206,7 +206,7 @@ const [socketConnected, setSocketConnected]=useState(false)
                             </div>
                         )}
                         <TextField
-                          placeholder=  {isTyping ? "typing..." : "Enter a message..."}
+                            placeholder=  {isTyping ? "typing..." : "Enter a message..."}
                             variant="filled"
                             onChange={typingHandler}
                             value={newMessage}
@@ -232,7 +232,5 @@ const [socketConnected, setSocketConnected]=useState(false)
 }
 
 export default SingleChat;
-
-
 
 

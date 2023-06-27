@@ -1,13 +1,13 @@
 
 
 export const getSender = (user, users) => {
-    if (users.length >= 2) {
+    if (users.length >= 2) { // Controlla se ci sono almeno due utenti nella chat.
         return users[0]._id === user._id ? users[1].name : users[0].name;
     }
-    // Inserisci qui il codice che gestisce il caso in cui `users` non abbia almeno due elementi
+
     return ""
 }
-
+// restituisce il nome del mittente della chat in base all'utente corrente (user) e all'array degli utenti partecipanti alla chat (users).
 export const getSenderFull=(user, users)=>{
     return users[0]._id===user._id ? users[1] :users[0]
 }
@@ -25,8 +25,7 @@ export const lastMessage=(messages, m, i, userId)=>{
         messages[messages.length-1].sender._id)
 }
 // Restituisce il margine sinistro o destro del messaggio in base all'utente mittente
-// Restituisce il margine sinistro del messaggio in base all'utente mittente
-// Restituisce il margine sinistro del messaggio in base all'utente mittente
+
 export const sameSenderMargin = (messages, message, index, userId) => {
     const senderId = message.sender._id;
     const previousMessage = messages[index - 1];
@@ -46,7 +45,7 @@ export const sameSenderMargin = (messages, message, index, userId) => {
     return 50; // Altri casi, margine sinistro di 50px
 };
 
-// Restituisce true se il messaggio è dello stesso utente del messaggio precedente
+
 export const sameUser = (messages, message, index, userId) => {
     const senderId = message.sender._id;
     const previousMessage = messages[index - 1];
@@ -59,3 +58,4 @@ export const sameUser = (messages, message, index, userId) => {
 
     return senderId === previousSenderId;
 };
+// Restituisce true se il messaggio è dello stesso utente del messaggio precedente

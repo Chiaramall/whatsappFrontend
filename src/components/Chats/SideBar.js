@@ -33,7 +33,7 @@ function SideBar() {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("")
     const [openSnackbar, setOpenSnackbar] = useState(false);
-   const [snackbarSeverity, setSnackbarseverity]=useState("")
+    const [snackbarSeverity, setSnackbarseverity]=useState("")
     const [snackbarMessage, setSnackbarMessage]=useState("")
     const [notificationCount, setNotificationCount] = useState(0);
 
@@ -60,7 +60,7 @@ function SideBar() {
         setNotifications
     } = useChatState();
     const [error, setError] = useState(false);
-
+const [notificationsMenu, setShowNotificationsMenu]=useState(false)
 
 
     const handleOpenModal = () => {
@@ -83,6 +83,7 @@ function SideBar() {
 
     const handleNotificationMenuOpen = (event) => {
         setNotificationMenuAnchorEl(event.currentTarget);
+        setShowNotificationsMenu(true)
         setNotificationCount(0); // Reset the notification count when the menu is opened
     };
 
@@ -139,7 +140,7 @@ function SideBar() {
 
     const handleSearch = async () => {
         if (!search) {
-           setSnackbarseverity("error")
+            setSnackbarseverity("error")
             setSnackbarMessage("campo di ricerca vuoto")
             setOpenSnackbar(true)
             return;
@@ -152,14 +153,14 @@ function SideBar() {
                     Authorization: `Bearer ${user.token}`,
                 },
             };
-            const {data} = await axios.get(`http://localhost:8080/api/user?search=${search}`, config);
+            const {data} = await axios.get(`https://mern-chat-app-api-cmhy.onrender.com/api/user?search=${search}`, config);
             setLoading(false);
 
 
             // Aggiungi i nuovi risultati alla lista dei risultati di ricerca esistente
             setSearchResult(data);
         } catch (e) {
-          setSnackbarseverity("error")
+            setSnackbarseverity("error")
             setSnackbarMessage("errore nella ricerca")
             setOpenSnackbar(true)
         }
@@ -197,7 +198,7 @@ function SideBar() {
             } else {
                 // Chat non trovata, crea una nuova chat
                 const { data } = await axios.post(
-                    "http://localhost:8080/api/chat",
+                    "https://mern-chat-app-api-cmhy.onrender.com/api/chat",
                     { userId },
                     config
                 );
@@ -220,6 +221,49 @@ function SideBar() {
             setLoadingChat(false);
         }
     };
+    const handleNotificationClick = (notification) => {
+        const { chat } = notification;
+
+        // Verifica se la chat è già presente nella lista delle chat
+        const existingChat = chats.find((c) => c.id.toString() === chat.id.toString());
+
+
+        if (!existingChat) {
+            // Verifica se la chat fa parte della lista amici
+            if (friendsList && friendsList.length > 0) {
+                const isFriendChat = friendsList.some((friend) =>
+                    friend.chats.some((c) => c.id.toString()=== chat.id.toString())
+                );
+
+                if (isFriendChat) {
+                    setSnackbarseverity("error");
+                    setSnackbarMessage("Questo utente è nella tua lista amici");
+                    setOpenSnackbar(true);
+                    return;
+                }
+            }
+
+            // Aggiungi la chat alla lista delle chat
+            const updatedChats = [chat, ...chats];
+            setChats(updatedChats);
+            // Salva i dati delle chat nel localStorage
+
+            // Seleziona la chat appena aggiunta
+            setSelectedChat(chat);
+        } else {
+            // Seleziona la chat esistente
+            setSelectedChat(existingChat);
+        }
+
+        // Chiudi il menu delle notifiche
+        setShowNotificationsMenu(false);
+
+        // Rimuovi la notifica dalla lista delle notifiche
+        setNotifications((prevNotifications) =>
+            prevNotifications.filter((n) => n.id !== notification.id)
+        );
+    };
+
 
     useEffect(() => {
         // Aggiorna il conteggio delle notifiche quando la prop `notifications` cambia
@@ -238,139 +282,136 @@ function SideBar() {
 
     return (
         <div>
-        <Grid
-            container
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            backgroundColor="white"
-            width="100%"
-            padding="5px 10px"
-            border="3px"
-            borderRadius={11}
-            boxShadow="0px 0px 4px 2px rgba(0, 0, 255, 0.5)"
-        >
-            <Tooltip title="search users" placement="bottom-end">
-                <Button variant="ghost" endIcon={<SearchIcon/>} onClick={openDrawer}>
-                    <Typography>Search users</Typography>
-                </Button>
-            </Tooltip>
+            <Grid
+                container
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                backgroundColor="white"
+                width="100%"
+                padding="5px 10px"
+                border="3px"
+                borderRadius={11}
+                boxShadow="0px 0px 4px 2px rgba(0, 0, 255, 0.5)"
+            >
+                <Tooltip title="search users" placement="bottom-end">
+                    <Button variant="ghost" endIcon={<SearchIcon/>} onClick={openDrawer}>
+                        <Typography>Search users</Typography>
+                    </Button>
+                </Tooltip>
 
-            <Typography color="blue" variant="h5">
-                Chat App
-            </Typography>
+                <Typography color="blue" variant="h5">
+                    Chat App
+                </Typography>
 
-            <div>
-                <Button
-                    onClick={handleNotificationMenuOpen}
-                >
-                    <Badge badgeContent={notificationCount} color="secondary">
-                        <Notifications />
-                    </Badge>
-                </Button>
+                <div>
+                    <Button
+                        onClick={handleNotificationMenuOpen}
+                    >
+                        <Badge badgeContent={notificationCount} color="secondary">
+                            <Notifications />
+                        </Badge>
+                    </Button>
 
-                <Menu
-                    id="search-menu"
-                    anchorEl={notificationMenuAnchorEl}
-                    keepMounted
-                    open={Boolean(notificationMenuAnchorEl)}  // Usa lo stato per gestire l'apertura del menu delle notifiche
-                    onClose={handleNotificationMenuClose}
-                >
-                    {notifications.length > 0 ? (
-                        notifications.map((notif) => (
-                            <MenuItem
-                                key={notif._id}
-                                onClick={() => {
-                                    setSelectedChat(notif.chat);
-                                    setNotifications(notifications.filter((n) => n !== notif));
-                                    handleSearchMenuClose();
-                                }}
-                            >
-                                {`New Message from ${getSender(user, notif.chat.users)}`}
-                            </MenuItem>
-                        ))
-                    ) : (
-                        <MenuItem >No new messages</MenuItem>
-                    )}
-                </Menu>
-
-                <Button
-                    aria-controls="avatar-menu"
-                    aria-haspopup="true"
-                    onClick={handleAvatarMenuOpen}
-                >
-                    <Avatar size="small" cursor="pointer" name={user.name}>
-                        {hasProfileImage ? (
-                            <img src={user.pic} alt="Profile"/>
+                    <Menu
+                        id="search-menu"
+                        anchorEl={notificationMenuAnchorEl}
+                        keepMounted
+                     open={notificationsMenu} // Usa lo stato per gestire l'apertura del menu delle notifiche
+                        onClose={handleNotificationMenuClose}
+                    >
+                        {notifications.length > 0 ? (
+                            notifications.map((notif) => (
+                                <MenuItem
+                                    key={notif._id}
+                                    onClick={() => handleNotificationClick(notif)
+                                    }
+                                >
+                                    {`New Message from ${getSender(user, notif.chat.users)}`}
+                                </MenuItem>
+                            ))
                         ) : (
-                            initials
+                            <MenuItem >No new messages</MenuItem>
                         )}
-                    </Avatar>
+                    </Menu>
 
-                    <ExpandMore/>
-                </Button>
+                    <Button
+                        aria-controls="avatar-menu"
+                        aria-haspopup="true"
+                        onClick={handleAvatarMenuOpen}
+                    >
+                        <Avatar size="small" cursor="pointer" name={user.name}>
+                            {hasProfileImage ? (
+                                <img src={user.pic} alt="Profile"/>
+                            ) : (
+                                initials
+                            )}
+                        </Avatar>
 
-                <Menu
-                    id="avatar-menu"
-                    anchorEl={anchorElAvatar}
-                    keepMounted
-                    open={Boolean(anchorElAvatar)}
-                    onClose={handleAvatarMenuClose}
-                >
-                    <Profile user={user} onClose={handleProfileClose} >
-                        <MenuItem onClick={handleProfileOpen}>My profile</MenuItem></Profile>
-                    <MenuItem onClick={logoutHandler}>Logout</MenuItem>
+                        <ExpandMore/>
+                    </Button>
+
+                    <Menu
+                        id="avatar-menu"
+                        anchorEl={anchorElAvatar}
+                        keepMounted
+                        open={Boolean(anchorElAvatar)}
+                        onClose={handleAvatarMenuClose}
+                    >
+                        <Profile user={user} onClose={handleProfileClose} >
+                            <MenuItem onClick={handleProfileOpen}>My profile</MenuItem></Profile>
+                        <MenuItem onClick={logoutHandler}>Logout</MenuItem>
 
 
-                </Menu>
-            </div>
-        </Grid>
-
-    <SwipeableDrawer open={isOpen} onClose={closeDrawer}>
-        <div className="drawer-content" style={{width: '300px', maxWidth: '100%'}}>
-            <Box display="flex" flexDirection="column" alignItems="center">
-                <div style={{marginBottom: '20px'}}>
-                    <Input
-                        placeholder="Cerca per nome o email"
-                        style={{width: '100%', padding: '10px'}}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                    </Menu>
                 </div>
-                <Button variant="contained" color="primary" onClick={handleSearch}>
-                    Cerca
-                </Button>
-            </Box>
+            </Grid>
 
-            {loading ? (
-                <Box
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    height={200}
-                >
-                    <CircularProgress/>
-                </Box>
-            ) : (
-                searchResult?.map((u) => (
-                    <UserListItem
-                        key={u._id}
-                        user={u}
-                        handleFunction={() => accessChat(u._id)}
-                    />
-                ))
-            )}
-            {loadingChat && <CircularProgress display="flex"/>}
+            <SwipeableDrawer open={isOpen} onClose={closeDrawer}>
+                <div className="drawer-content" style={{width: '300px', maxWidth: '100%'}}>
+                    <Box display="flex" flexDirection="column" alignItems="center">
+                        <div style={{marginBottom: '20px'}}>
+                            <Input
+                                placeholder="Cerca per nome o email"
+                                style={{width: '100%', padding: '10px'}}
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </div>
+                        <Button variant="contained" color="primary" onClick={handleSearch}>
+                            Cerca
+                        </Button>
+                    </Box>
+
+                    {loading ? (
+                        <Box
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                            height={200}
+                        >
+                            <CircularProgress/>
+                        </Box>
+                    ) : (
+                        searchResult?.map((u) => (
+                            <UserListItem
+                                key={u._id}
+                                user={u}
+                                handleFunction={() => accessChat(u._id)}
+                            />
+                        ))
+                    )}
+                    {loadingChat && <CircularProgress display="flex"/>}
+                </div>
+
+                <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                    <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                        {snackbarMessage}
+                    </Alert>
+                </Snackbar>
+            </SwipeableDrawer>
         </div>
 
-        <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleSnackbarClose}>
-            <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-                {snackbarMessage}
-            </Alert>
-        </Snackbar>
-    </SwipeableDrawer>
-        </div>
-
-)
+    )
 }
 export default SideBar
