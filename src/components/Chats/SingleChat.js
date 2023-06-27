@@ -23,7 +23,7 @@ import './style.css';
 import axios from "axios";
 import {toast} from "react-toastify";
 import {saveChatsToLocalStorage, saveMessagesToLocalStorage} from "../../utils/localStorage";
-const ENDPOINT ="http://localhost:8080";
+const ENDPOINT ="https://mern-chat-app-api-cmhy.onrender.com";
 let socket, selectedChatCompare;
 
 function SingleChat() {
@@ -53,7 +53,7 @@ function SingleChat() {
             setLoading(true);
 
             const { data } = await axios.get(
-                `http://localhost:8080/api/message/${selectedChat._id}`,
+                `https://mern-chat-app-api-cmhy.onrender.comapi/message/${selectedChat._id}`,
                 config
             );
             setMessages(data);
