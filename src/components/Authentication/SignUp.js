@@ -71,7 +71,7 @@ function SignUp() {
         }
 
         try {
-            const { data } = await axios.post("http://localhost:8080/api/user", {
+            const { data } = await axios.post("https://mern-chat-app-api-cmhy.onrender.com/api/user", {
                 name,
                 email,
                 password,

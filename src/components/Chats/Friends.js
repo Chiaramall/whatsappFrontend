@@ -76,7 +76,7 @@ const [severitySnackbar, setSeveritySnackbar]=useState("")
             }
 
             // Cerca la chat con l'utente selezionato nella lista delle chat tra gli amici
-            const existingChat = friendChats.find((chat) =>
+            const existingChat = friendsList.find((chat) =>
                 chat.users.some((chatUser) => chatUser._id === userId)
             );
 
