@@ -9,12 +9,7 @@ export const getUserFromLocalStorage = () => {
 export const removeUserFromLocalStorage = () => {
     localStorage.removeItem("user");
 };
-export const removeChatsFromLocalStorage = () => {
-    localStorage.removeItem("chats");
-};
-export const removeFriends = () => {
-    localStorage.removeItem("friendsList");
-};
+
 
 
 

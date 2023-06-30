@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Login from "../components/Authentication/Login";
 import SignUp from "../components/Authentication/SignUp";
 import { useNavigate } from "react-router-dom";
-import { useChatState } from "../Context/ChatProvider";
+
 import {getUserFromLocalStorage} from "../utils/localStorage";
 
 function HomePage() {
@@ -26,11 +26,11 @@ function HomePage() {
         <Container maxWidth="lg" justifyContent="center">
             <Box
                 display="flex"
-                justifyContent="center"
+                justifycontent="center"
                 padding="3px"
                 backgroundColor="white"
                 borderRadius="lg"
-                borderWidth="1px"
+                borderwidth="1px"
                 width="100%"
                 margin="40px 0 15px 0"
             >

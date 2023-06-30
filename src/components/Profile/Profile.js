@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { useChatState } from "../../Context/ChatProvider";
 
 function Profile({ user, children }) {
-    const [open, setOpen] = useState(false); // Inizializza open a 'false'
-
+    const [open, setOpen] = useState(false);
     const handleOpen = () => {
         setOpen(true);
     };
@@ -16,7 +15,7 @@ function Profile({ user, children }) {
     return (
         <>
             {children ? (
-                <span onClick={handleOpen}>{children}</span> // Usa handleOpen per aprire il modal
+                <span onClick={handleOpen}>{children}</span> //  handleOpen per aprire il modal
             ) : null}
 
             <Modal open={open} onClose={handleClose}>

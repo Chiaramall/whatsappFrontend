@@ -3,12 +3,7 @@ import { useEffect, useState } from "react";
 import {
     Container,
     Box,
-    Typography,
-    Stack,
-    TextField,
-    Button,
-    IconButton,
-    InputAdornment,
+    Typography, Stack, TextField, Button, IconButton, InputAdornment,
     Snackbar, Alert,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -20,7 +15,7 @@ import { addUserToLocalStorage, getUserFromLocalStorage } from "../../utils/loca
 
 function Login() {
     const navigate = useNavigate();
-
+const {setFriendsList}=useChatState()
     const [showPassword, setShowPassword] = useState(false);
     const [values, setValues] = useState({
         email: "",
@@ -29,50 +24,80 @@ function Login() {
     });
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarSeverity, setSnackbarSeverity] = useState("");
+    const [snackbarSeverity, setSnackbarSeverity] = useState("info");
 
     const handleTogglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setValues({ ...values, loading: true });
-        const { email, password } = values;
-        if (!email || !password) {
-            setSnackbarSeverity("error");
-            setSnackbarMessage("Please fill in all the fields.");
-            setSnackbarOpen(true);
-            setValues({ ...values, loading: false });
-            return;
-        }
-        try {
-            const { data } = await axios.post("https://mern-chat-app-api-cmhy.onrender.com/api/user/login", {
-                email,
-                password,
-            });
-            setSnackbarSeverity("success");
-            setSnackbarMessage("Login effettuato con successo");
-            setSnackbarOpen(true);
 
-            addUserToLocalStorage(data);
-            navigate("/chats");
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            setValues({ ...values, loading: true });
+            const { email, password } = values;
+            if (!email || !password) {
+                setSnackbarSeverity('error');
+                setSnackbarMessage('Compila tutti i campi.');
+                setSnackbarOpen(true);
+                setValues({ ...values, loading: false });
+                return;
+            }
+            try {
+                const { data } = await axios.post('http://localhost:8080/api/user/login', {
+                    email,
+                    password,
+                });
+                setSnackbarSeverity('success');
+                setSnackbarMessage('Login effettuato con successo');
+                setSnackbarOpen(true);
+                addUserToLocalStorage(data);
 
-            setValues({ ...values, loading: false });
-        } catch (error) {
-            setSnackbarSeverity("error");
-            setSnackbarMessage("Errore nel login, password o email errate.");
-            setSnackbarOpen(true);
-            setValues({ ...values, loading: false });
-        }
-    };
+                // Recupera le informazioni sugli amici
+                try {
+                    const response = await axios.get('http://localhost:8080/api/friends', {
+                        headers: {
+                            Authorization: `Bearer ${data.token}`,
+                        },
+                    });
+                    const friends = response.data.friends;
+                    localStorage.setItem('friends', JSON.stringify(friends));
+                    setFriendsList(friends);
+                    // Utilizza le informazioni sugli amici come desiderato
+                } catch (error) {
+                    console.error('Errore nel recupero degli amici:', error);
+                    // Gestisci l'errore del recupero degli amici
+                }
 
-    useEffect(() => {
-        const loggedInUser = getUserFromLocalStorage("user");
-        if (loggedInUser) {
-            navigate("/chats");
-        }
-    }, [navigate]);
+                setTimeout(() => {
+                    navigate('/chats');
+                }, 1000);
+                setValues({ ...values, loading: false });
+            } catch (error) {
+                setSnackbarSeverity('error');
+                setSnackbarMessage('Errore nel login, password o email errate.');
+                setSnackbarOpen(true);
+                setValues({ ...values, loading: false });
+                console.log(error);
+            }
+        };
+
+        useEffect(() => {
+            const loggedInUser = getUserFromLocalStorage('user');
+            if (loggedInUser) {
+                navigate('/chats');
+            } else {
+                // Utente non loggato, recupera le informazioni sugli amici
+                const storedFriends = localStorage.getItem('friends');
+                if (storedFriends) {
+                    const friends = JSON.parse(storedFriends);
+                    setFriendsList(friends);
+                    // Utilizza le informazioni sugli amici come desiderato
+                }
+            }
+        }, [navigate]);
+
+        // ..
+
 
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);

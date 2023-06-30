@@ -8,14 +8,14 @@ import {
     Button,
     IconButton,
     InputAdornment,
-    Snackbar, Alert, FormLabel, FormControl, Input
+    Snackbar, Alert, FormLabel, FormControl
 } from "@mui/material";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import {toast, ToastContainer} from "react-toastify";
-import { ChatState, useChatState } from "../../Context/ChatProvider";
+import { ToastContainer} from "react-toastify";
+
 import { addUserToLocalStorage, getUserFromLocalStorage } from "../../utils/localStorage";
 
 function SignUp() {
@@ -26,9 +26,8 @@ function SignUp() {
 
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarSeverity, setSnackbarSeverity] = useState("");
-    const { setUser } = useChatState();
-
+    const [snackbarSeverity, setSnackbarSeverity] = useState("info");
+    const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
     const handleTogglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -38,6 +37,14 @@ function SignUp() {
     };
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
+    };
+    const handleProfilePicChange = (event) => {
+        const imageFile = event.target.files[0];
+        setPic(imageFile);
+
+        // Crea un URL temporaneo per il file immagine selezionato
+        const imageUrl = URL.createObjectURL(imageFile);
+        setPreviewImageUrl(imageUrl);
     };
 
 
@@ -52,7 +59,7 @@ function SignUp() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const { name, email, password, passwordConfirm } = values;
+        const { name, email, password, passwordConfirm, pic } = values;
 
         if (!name || !email || !password || !passwordConfirm) {
             setSnackbarSeverity("error");
@@ -69,9 +76,31 @@ function SignUp() {
             setValues({ ...values, loading: false });
             return;
         }
+        if (password.length < 5) {
+            setSnackbarSeverity("error");
+            setSnackbarMessage("Password should be at least 5 characters long.");
+            setSnackbarOpen(true);
+            setValues({ ...values, loading: false });
+            return;
+        }
+        if (!/\d/.test(password)) {
+            setSnackbarSeverity("error");
+            setSnackbarMessage("Password must contain at least one number.");
+            setSnackbarOpen(true);
+            setValues({ ...values, loading: false });
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.(com|it)$/;
+        if (!emailRegex.test(email)) {
+            setSnackbarSeverity("error");
+            setSnackbarMessage("Invalid email format.");
+            setSnackbarOpen(true);
+            setValues({ ...values, loading: false });
+            return;
+        }
 
         try {
-            const { data } = await axios.post("https://mern-chat-app-api-cmhy.onrender.com/api/user", {
+            const { data } = await axios.post("http://localhost:8080/api/user", {
                 name,
                 email,
                 password,
@@ -80,10 +109,12 @@ function SignUp() {
             });
 
             addUserToLocalStorage(data);
-            navigate("/chats");
             setSnackbarSeverity("success");
             setSnackbarMessage("Registration completed successfully.");
             setSnackbarOpen(true);
+            setTimeout(() => {
+                navigate("/chats");
+            }, 2000);
             setValues({ ...values, loading: false });
         } catch (error) {
             setSnackbarSeverity("error");
@@ -151,17 +182,18 @@ return (
                             }}
                         />
 
-                        <FormControl>
+                        <FormControl id="pic">
                             <FormLabel>Upload Pic</FormLabel>
-                            <Input
+                            <input
                                 type="file"
+                                label="Image"
                                 multiple={false}
-                                onChange={(event) => {
-                                    const imageFile = event.target.files[0];
-                                    setValues({ ...values, pic: imageFile });
-                                }}
+                                name="myFile"
+                                p={1.5}
+                                onChange={handleProfilePicChange}
                             />
                         </FormControl>
+
                         <Button type="submit" variant="contained" color="primary" fullWidth>
                             Register
                         </Button>

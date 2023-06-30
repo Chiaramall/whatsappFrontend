@@ -4,40 +4,39 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import ScrollableChat from "./ScrollableChat";
 import  {getSender, getSenderFull} from "../config/ChatsConfig";
-import {ChatState, useChatState} from "../../Context/ChatProvider";
+import { useChatState} from "../../Context/ChatProvider";
 import {ArrowBack} from "@mui/icons-material";
 import Profile from "../Profile/Profile";
 import io from 'socket.io-client'
 import {
-    Box,
-    CircularProgress,
-    FormControl,
-    Input,
-    InputAdornment,
-    InputBase,
-    InputLabel,
-    Paper,
+    Alert,
+    Box, CircularProgress,
+  Snackbar,
     TextField
 } from "@mui/material";
 import './style.css';
 import axios from "axios";
-import {toast} from "react-toastify";
-import {saveChatsToLocalStorage, saveMessagesToLocalStorage} from "../../utils/localStorage";
-const ENDPOINT ="https://mern-chat-app-api-cmhy.onrender.com";
+
+const ENDPOINT ="http://localhost:8080";
 let socket, selectedChatCompare;
 
 function SingleChat() {
-    const { user, selectedChat, setSelectedChat, notifications, setNotifications , chats, setChats} = useChatState()
+    const { user, selectedChat, setSelectedChat, notifications, setNotifications} = useChatState()
     const [messages, setMessages] = useState([]);
 
     const [loading, setLoading] = useState(false);
     const [newMessage, setNewMessage] = useState("");
-
+    const [openSnackbar, setOpenSnackbar] = useState(false);
+    const [snackbarSeverity, setSnackbarseverity]=useState("success")
+    const [snackbarMessage, setSnackbarMessage]=useState("")
     const [socketConnected, setSocketConnected]=useState(false)
     const [typing, setTyping]=useState(false)
     const [isTyping, setIsTyping]=useState(false)
     const [fetchAgain, setFetchAgain]=useState(false)
 
+    const handleSnackbarClose = () => {
+        setOpenSnackbar(false);
+    };
 
 
     const fetchMessages = async () => {
@@ -53,7 +52,7 @@ function SingleChat() {
             setLoading(true);
 
             const { data } = await axios.get(
-                `https://mern-chat-app-api-cmhy.onrender.comapi/message/${selectedChat._id}`,
+                `http://localhost:8080/api/message/${selectedChat._id}`,
                 config
             );
             setMessages(data);
@@ -61,14 +60,9 @@ function SingleChat() {
 
             socket.emit("join chat", selectedChat._id);
         } catch (error) {
-            toast({
-                title: "Error Occured!",
-                description: "Failed to Load the Messages",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-                position: "bottom",
-            });
+            setSnackbarseverity("error")
+            setSnackbarMessage("errore ")
+            setOpenSnackbar(true)
         }
     };
 
@@ -83,8 +77,8 @@ function SingleChat() {
                     },
                 };
                 setNewMessage("");
-                const { data } = await axios.post(
-                    "https://mern-chat-app-api-cmhy.onrender.com/api/message",
+                const {data} = await axios.post(
+                    "http://localhost:8080/api/message",
                     {
                         content: newMessage,
                         chatId: selectedChat,
@@ -94,20 +88,14 @@ function SingleChat() {
                 socket.emit("new message", data);
                 setMessages([...messages, data]);
 
-
-
             } catch (error) {
-                toast({
-                    title: "Error Occured!",
-                    description: "Failed to send the Message",
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                    position: "bottom",
-                });
+                setSnackbarseverity("error")
+                setSnackbarMessage("invio messaggio fallito")
+                setOpenSnackbar(true)
             }
         }
-    };
+    }
+
 
     useEffect(() => {
         socket = io(ENDPOINT);
@@ -119,20 +107,18 @@ function SingleChat() {
         socket.on("typing", () => setIsTyping(true));
         socket.on("stop typing", () => setIsTyping(false));
 
-        // eslint-disable-next-line
     }, []);
 
     useEffect(() => {
         fetchMessages();
 
         selectedChatCompare = selectedChat;
-        // eslint-disable-next-line
     }, [selectedChat]);
 
     useEffect(() => {
         socket.on("message recieved", (newMessageRecieved) => {
             if (
-                !selectedChatCompare || // if chat is not selected or doesn't match current chat
+                !selectedChatCompare ||
                 selectedChatCompare._id !== newMessageRecieved.chat._id
             ) {
                 if (!notifications.includes(newMessageRecieved)) {
@@ -225,7 +211,14 @@ function SingleChat() {
                     <Typography variant="h4" align="center" style={{ marginLeft: "300px" }}>
                         Click on a user to start chatting
                     </Typography>
+
+                    <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                            {snackbarMessage}
+                        </Alert>
+                    </Snackbar>
                 </Box>
+
             )}
         </>
     );

@@ -19,7 +19,7 @@ root.render(
 
 );
 
-
+//inglobiamo App in ChatProvider per rendere disponibili le sue funzionalità a componenti figli di App
 
 
 

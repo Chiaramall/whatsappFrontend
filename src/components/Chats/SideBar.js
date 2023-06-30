@@ -13,18 +13,15 @@ import {
     SwipeableDrawer, Modal, Input, Snackbar, CircularProgress, Alert, Badge
 } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
-import {Doorbell, DoorbellOutlined, ExpandMore, Notifications} from "@mui/icons-material";
-import {ChatState, useChatState} from "../../Context/ChatProvider";
+import { ExpandMore, Notifications} from "@mui/icons-material";
+import { useChatState} from "../../Context/ChatProvider";
 import React from 'react';
 import Profile from "../Profile/Profile";
 import UserListItem from '../User/UserListItem'
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
 import {
-    getChatsFromLocalStorage, removeChats,
-    removeFriends, removeMessage,
     removeUserFromLocalStorage,
-    saveChatsToLocalStorage
 } from "../../utils/localStorage";
 import {getSender} from "../config/ChatsConfig";
 
@@ -33,15 +30,13 @@ function SideBar() {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("")
     const [openSnackbar, setOpenSnackbar] = useState(false);
-    const [snackbarSeverity, setSnackbarseverity]=useState("")
+    const [snackbarSeverity, setSnackbarseverity]=useState("success")
     const [snackbarMessage, setSnackbarMessage]=useState("")
     const [notificationCount, setNotificationCount] = useState(0);
 
     const [profileOpen, setProfileOpen] = useState(false);
-    const [openModal, setOpenModal] = useState(false);
 
-// Aggiungi la funzione per gestire l'apertura del menu delle notifiche
-    const [anchorElSearch, setAnchorElSearch] = useState(null);
+
     const [anchorElAvatar, setAnchorElAvatar] = useState(null);
 
     const [loading, setLoading] = useState(false);
@@ -49,51 +44,49 @@ function SideBar() {
     const [loadingChat, setLoadingChat] = useState(false)
     const {
         user,
-        setUser,
         setSelectedChat,
-        selectedChat,
         chats,
         setChats,
         friendsList,
-        setFriendsLIst,
         notifications,
         setNotifications
     } = useChatState();
-    const [error, setError] = useState(false);
+
 const [notificationsMenu, setShowNotificationsMenu]=useState(false)
+    const [notificationMenuAnchorEl, setNotificationMenuAnchorEl] = useState(null);
+
+// ...
+
+    const handleOutsideClick = (event) => {
+        const menu = document.getElementById("search-menu");
+        if (menu && !menu.contains(event.target)) {
+            setShowNotificationsMenu(false);
+        }
+    };
+    useEffect(() => {
+        document.addEventListener("click", handleOutsideClick);
+        return () => {
+            document.removeEventListener("click", handleOutsideClick);
+        };
+    }, []);
+    const handleNotificationMenuOpen = (event) => {
+        event.stopPropagation(); // stopPropagation per evitare la propagazione dell'evento
+        setShowNotificationsMenu(true);
+        setNotificationMenuAnchorEl(event.currentTarget);
+        setNotificationCount(0); // Resetta conteggio delle notifiche quando il menu viene aperto
+    };
 
 
-    const handleOpenModal = () => {
-        setOpenModal(true);
-    };
-    const handleCloseModal = () => {
-        setOpenModal(false);
-    };
-    const handleSnackbarClos = () => {
-        setError(false);
-    };
+
     const handleSnackbarClose = () => {
         setOpenSnackbar(false);
     };
 
 
-    const [notificationMenuAnchorEl, setNotificationMenuAnchorEl] = useState(null);
-
-// ...
-
-    const handleNotificationMenuOpen = (event) => {
-        setNotificationMenuAnchorEl(event.currentTarget);
-        setShowNotificationsMenu(true)
-        setNotificationCount(0); // Reset the notification count when the menu is opened
-    };
-
-    const handleSearchMenuClose = () => {
-        setNotificationMenuAnchorEl(false);
-        setNotificationCount(notificationCount + 1); // Increment the notification count
-    };
 
     const handleNotificationMenuClose = () => {
-        setNotificationMenuAnchorEl(false);}
+        setShowNotificationsMenu(false)
+        setNotificationMenuAnchorEl(null);}
     const openDrawer = () => {
         setIsOpen(true);
     };
@@ -115,16 +108,13 @@ const [notificationsMenu, setShowNotificationsMenu]=useState(false)
     const handleProfileClose = () => {
         setProfileOpen(false);
     };
-    const handleSearchMenuOpen = (event) => {
-        setAnchorElSearch(event.currentTarget);
-    };
 
 
 
     const handleAvatarMenuOpen = (event) => {
         setAnchorElAvatar(event.currentTarget);
     };
-    const hasProfileImage = !!user.pic; // Assume che user.pic sia l'URL dell'immagine del profilo
+    const hasProfileImage = !!user.pic;
 
     const handleAvatarMenuClose = () => {
         setAnchorElAvatar(null);
@@ -133,7 +123,9 @@ const [notificationsMenu, setShowNotificationsMenu]=useState(false)
 
     const logoutHandler = () => {
         removeUserFromLocalStorage("user");
-        removeFriends("friendsList")
+        localStorage.removeItem("friends")
+        localStorage.removeItem("friendChats")
+        localStorage.removeItem("chats")
         navigate("/");
     };
 
@@ -153,11 +145,8 @@ const [notificationsMenu, setShowNotificationsMenu]=useState(false)
                     Authorization: `Bearer ${user.token}`,
                 },
             };
-            const {data} = await axios.get(`https://mern-chat-app-api-cmhy.onrender.com/api/user?search=${search}`, config);
+            const {data} = await axios.get(`http://localhost:8080/api/user?search=${search}`, config);
             setLoading(false);
-
-
-            // Aggiungi i nuovi risultati alla lista dei risultati di ricerca esistente
             setSearchResult(data);
         } catch (e) {
             setSnackbarseverity("error")
@@ -198,7 +187,7 @@ const [notificationsMenu, setShowNotificationsMenu]=useState(false)
             } else {
                 // Chat non trovata, crea una nuova chat
                 const { data } = await axios.post(
-                    "https://mern-chat-app-api-cmhy.onrender.com/api/chat",
+                    "http://localhost:8080/api/chat",
                     { userId },
                     config
                 );
@@ -221,64 +210,6 @@ const [notificationsMenu, setShowNotificationsMenu]=useState(false)
             setLoadingChat(false);
         }
     };
-    const handleNotificationClick = (notification) => {
-        const { chat } = notification;
-
-        // Verifica se la chat è già presente nella lista delle chat
-        const existingChat = chats.find((c) => c.id.toString() === chat.id.toString());
-
-
-        if (!existingChat) {
-            // Verifica se la chat fa parte della lista amici
-            if (friendsList && friendsList.length > 0) {
-                const isFriendChat = friendsList.some((friend) =>
-                    friend.chats.some((c) => c.id.toString()=== chat.id.toString())
-                );
-
-                if (isFriendChat) {
-                    setSnackbarseverity("error");
-                    setSnackbarMessage("Questo utente è nella tua lista amici");
-                    setOpenSnackbar(true);
-                    return;
-                }
-            }
-
-            // Aggiungi la chat alla lista delle chat
-            const updatedChats = [chat, ...chats];
-            setChats(updatedChats);
-            // Salva i dati delle chat nel localStorage
-
-            // Seleziona la chat appena aggiunta
-            setSelectedChat(chat);
-        } else {
-            // Seleziona la chat esistente
-            setSelectedChat(existingChat);
-        }
-
-        // Chiudi il menu delle notifiche
-        setShowNotificationsMenu(false);
-
-        // Rimuovi la notifica dalla lista delle notifiche
-        setNotifications((prevNotifications) =>
-            prevNotifications.filter((n) => n.id !== notification.id)
-        );
-    };
-
-
-    useEffect(() => {
-        // Aggiorna il conteggio delle notifiche quando la prop `notifications` cambia
-        setNotificationCount(notifications.length);
-    }, [notifications]);
-
-    useEffect(() => {
-        // Apri il menu delle notifiche se ci sono nuove notifiche
-        if (notifications.length > 0) {
-            setNotificationMenuAnchorEl(true);
-        }
-    }, [notifications]);
-
-
-
 
     return (
         <div>
@@ -305,42 +236,44 @@ const [notificationsMenu, setShowNotificationsMenu]=useState(false)
                 </Typography>
 
                 <div>
-                    <Button
-                        onClick={handleNotificationMenuOpen}
-                    >
-                        <Badge badgeContent={notificationCount} color="secondary">
-                            <Notifications />
-                        </Badge>
-                    </Button>
+                    <Badge badgeContent={notifications.length} color="secondary">
+                        <IconButton onClick={handleNotificationMenuOpen}>
+                            <Notifications color="blue"/>
+                        </IconButton>
+                    </Badge>
+
 
                     <Menu
                         id="search-menu"
                         anchorEl={notificationMenuAnchorEl}
                         keepMounted
-                     open={notificationsMenu} // Usa lo stato per gestire l'apertura del menu delle notifiche
+                        open={notificationsMenu}
                         onClose={handleNotificationMenuClose}
                     >
                         {notifications.length > 0 ? (
                             notifications.map((notif) => (
                                 <MenuItem
                                     key={notif._id}
-                                    onClick={() => handleNotificationClick(notif)
-                                    }
+                                    onClick={() => {
+                                        setSelectedChat(notif.chat);
+                                        setNotifications(notifications.filter((n) => n !== notif));
+                                    }}
                                 >
                                     {`New Message from ${getSender(user, notif.chat.users)}`}
                                 </MenuItem>
                             ))
                         ) : (
-                            <MenuItem >No new messages</MenuItem>
+                            <MenuItem>No new messages</MenuItem>
                         )}
                     </Menu>
+
 
                     <Button
                         aria-controls="avatar-menu"
                         aria-haspopup="true"
                         onClick={handleAvatarMenuOpen}
                     >
-                        <Avatar size="small" cursor="pointer" name={user.name}>
+                        <Avatar size="small" cursor="pointer" src={user.pic}>
                             {hasProfileImage ? (
                                 <img src={user.pic} alt="Profile"/>
                             ) : (

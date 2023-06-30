@@ -5,6 +5,7 @@ min-height: 100vh;
   background-size: cover;
   background-position: center;
 }
+
 ::-webkit-scrollbar{
   width: 15px;
 }
